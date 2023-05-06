@@ -7,7 +7,7 @@ from telegram.ext import (
     ConversationHandler
 )
 from start_menu import start, main_menu
-from interrupt import *
+from interrupt import end, wrong_message
 from constants import *
 
 
