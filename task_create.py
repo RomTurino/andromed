@@ -4,14 +4,17 @@ from telegram.ext import (
     MessageHandler,
     CommandHandler,
     ConversationHandler, 
-    CallbackContext
+    CallbackContext,
+    CallbackQueryHandler
 )
 from telegram import Update
 from constants import *
-
-
-
+from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 from datetime import date
+
+
+
+
 
 def add_task(update: Update, context: CallbackContext):
     name = update.effective_user.first_name
@@ -22,7 +25,22 @@ def add_task(update: Update, context: CallbackContext):
 def handle_task_text(update: Update, context: CallbackContext):
     message = update.message.text # взяли сообщение, где пользователь пишет текст дела
     context.user_data["todo_text"] = message # сохранили это в рюкзак
-    update.message.reply_text(message)
+    # update.message.reply_text(message)
+    calendar, step = DetailedTelegramCalendar(locale="ru", min_date=date.today()).build()
+    context.bot.send_message(update.effective_chat.id,
+                     f"Выберите {RU_STEP[step]}",
+                     reply_markup=calendar)
+    return DATE
+
+def handle_date(update: Update, context: CallbackContext):
+    result, key, step = DetailedTelegramCalendar(locale="ru", min_date=date.today()).process(update.callback_query.data)
+    if not result and key:
+        context.bot.send_message(update.effective_chat.id,
+                                 f"Выберите {RU_STEP[step]}", reply_markup=key)
+    elif result:
+        context.bot.send_message(update.effective_chat.id,
+                                 f"Вы выбрали {result}")
+        
     
 
 def endpoint(update: Update, context: CallbackContext):
@@ -34,7 +52,8 @@ def endpoint(update: Update, context: CallbackContext):
 add_handler = ConversationHandler(#обработчик диалога
     entry_points=[MessageHandler(Filters.regex(f"^{CREATE}$"), add_task)],
     states={
-        TASK: [MessageHandler(Filters.text & ~Filters.command, handle_task_text)]
+        TASK: [MessageHandler(Filters.text & ~Filters.command, handle_task_text)],
+        DATE: [CallbackQueryHandler(handle_date, DetailedTelegramCalendar.func())]
     },
     fallbacks=[CommandHandler("no", endpoint)]
 )
