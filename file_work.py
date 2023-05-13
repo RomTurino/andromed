@@ -9,4 +9,4 @@ def init(update:Update, context:CallbackContext):
     if not os.path.exists("database"):# если папки нет
         os.mkdir("database") #то папку создаем
     if not os.path.exists(file):
-        open(file, "w")
+        open(file, "w") # w - write, открываем файл для записи
